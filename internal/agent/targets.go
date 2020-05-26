@@ -14,6 +14,7 @@ type Targets []Target
 
 // Target represents target
 type Target struct {
+	Name     string        `yaml:"name"`
 	URI      string        `yaml:"uri"`
 	Interval time.Duration `yaml:"interval"`
 	RegExp   string        `yaml:"regexp"`

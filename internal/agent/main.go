@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"github.com/soider/go-metrics-collector/internal/agent/probe"
+	"github.com/soider/go-metrics-collector/internal/message"
 	"log"
 	"os"
 	"os/signal"
@@ -12,7 +14,8 @@ func Main(targetsFilePath string, rawSelector []string) error {
 		targetsFilePath,
 		MustParseSelector(rawSelector),
 	)
-	runningAgent := NewMonitoringAgent(targets)
+	resCh := make(chan message.MonitoringResultMessage, 10)
+	runningAgent := NewMonitoringAgent(targets, resCh, probe.HTTPProbe)
 	stopCh := make(chan struct{})
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT)
