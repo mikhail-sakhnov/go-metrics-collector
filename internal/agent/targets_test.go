@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/likexian/gokit/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 

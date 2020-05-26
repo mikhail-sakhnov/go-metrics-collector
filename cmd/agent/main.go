@@ -5,8 +5,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -18,19 +16,7 @@ func main() {
 		Name:  "metrics-collector-agent",
 		Usage: "starts agent",
 		Action: func(c *cli.Context) error {
-			targets := agent.MustReadTargets(
-				c.String("targets"),
-				agent.MustParseSelector(c.StringSlice("selector")))
-			runningAgent := agent.NewMonitoringAgent(targets)
-			stopCh := make(chan struct{})
-			signalCh := make(chan os.Signal, 1)
-			signal.Notify(signalCh, syscall.SIGINT)
-			go func() {
-				<-signalCh
-				log.Print("Caught interruption signal, stopping agent")
-				stopCh <- struct{}{}
-			}()
-			return runningAgent.Run(stopCh)
+			return agent.Main(c.String("targets"), c.StringSlice("selector"))
 		},
 	}
 	err := app.Run(os.Args)
