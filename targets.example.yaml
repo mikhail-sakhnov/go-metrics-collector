@@ -1,0 +1,13 @@
+- uri: https://reddit.com
+  interval: 60s
+  regexp: ".*redux_json_start.*"
+  selector:
+    target: reddit
+    enable: true
+
+- uri: https://linux.org.ru
+  interval: 50s
+  regexp: ".*ubuntu.*"
+  selector:
+    target: lor
+    enable: false
