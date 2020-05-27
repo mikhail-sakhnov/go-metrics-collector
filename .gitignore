@@ -18,3 +18,9 @@ infra/
 
 
 .env
+.idea
+
+*.pem
+*.cert
+*.key
+
