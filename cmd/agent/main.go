@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"github.com/soider/go-metrics-collector/internal/agent"
-	"github.com/soider/go-metrics-collector/internal/agent/probes"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"os"
 	"os/signal"
@@ -46,44 +44,16 @@ func main() {
 
 // Main application entry point
 func run(targetsFilePath string, rawSelector []string, brokers []string, topic, certFile, keyFile, caFile string, failureThreshold int) error {
-	targets := agent.MustReadTargets(
-		targetsFilePath,
-		agent.MustParseSelector(rawSelector),
-	)
 	ctx, cancel := context.WithCancel(context.Background())
-	gr, ctx := errgroup.WithContext(ctx)
-
-	loopFn, resCh := agent.NewKafkaWriterLoop(agent.MustBuildKafkaWriteClient(
-		brokers,
-		topic,
-		certFile,
-		keyFile,
-		caFile,
-	),
-		failureThreshold,
-	)
-
-	runningAgent := agent.NewMonitoringAgent(targets, resCh, probes.HTTPProbe, failureThreshold)
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT)
-
 	go func() {
 		select {
 		case <-signalCh:
 			log.Print("Caught interruption signal, stopping agent")
-		case <-ctx.Done():
-			log.Print("Background context cancelled")
 		}
 		cancel()
 	}()
 
-	gr.Go(func() error {
-		return loopFn(ctx)
-	})
-
-	gr.Go(func() error {
-		return runningAgent.Run(ctx)
-	})
-
-	return gr.Wait()
+	return agent.Loop(ctx, targetsFilePath, rawSelector, brokers, topic, certFile, keyFile, caFile, failureThreshold)
 }
