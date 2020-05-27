@@ -44,3 +44,12 @@ services:
       - /app/ca.pem
       - -db
       - ${POSTGRES_URI}
+
+  init_db:
+    image: golang:1.14
+    volumes:
+    - .:/app
+    working_dir: /app/migrations
+    command:
+      - ./migrate.sh
+      - ${POSTGRES_URI}
