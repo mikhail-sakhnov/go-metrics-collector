@@ -19,11 +19,11 @@ func TestSelectors(t *testing.T) {
 
 	t.Run("must_match_other_selector", func(t *testing.T) {
 		selector := Selector{
-			"app":     "agent",
+			"app":     "Agent",
 			"enabled": "true",
 		}
 		other := Selector{
-			"app":                      "agent",
+			"app":                      "Agent",
 			"enabled":                  "true",
 			"some_other_key_we_ignore": "value",
 		}
@@ -32,11 +32,11 @@ func TestSelectors(t *testing.T) {
 
 	t.Run("must_not_match_other_selector", func(t *testing.T) {
 		selector := Selector{
-			"app":     "agent",
+			"app":     "Agent",
 			"enabled": "false",
 		}
 		other := Selector{
-			"app":                      "agent",
+			"app":                      "Agent",
 			"enabled":                  "true",
 			"some_other_key_we_ignore": "value",
 		}
@@ -47,30 +47,30 @@ func TestSelectors(t *testing.T) {
 		targets := filterTargets(Targets{
 			Target{
 				Selector: Selector{
-					"app":  "agent",
+					"app":  "Agent",
 					"name": "A",
 				},
 			},
 			Target{
 				Selector: Selector{
-					"app":  "agent",
+					"app":  "Agent",
 					"name": "B",
 				},
 			},
 			Target{
 				Selector: Selector{
-					"app":  "non-agent",
+					"app":  "non-Agent",
 					"name": "C",
 				},
 			},
 			Target{
 				Selector: Selector{
-					"app":  "agent",
+					"app":  "Agent",
 					"name": "D",
 				},
 			},
 		}, Selector{
-			"app": "agent",
+			"app": "Agent",
 		})
 		assert.Len(t, targets, 3)
 		assert.Equal(t, "A", targets[0].Selector["name"])

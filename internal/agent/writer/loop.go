@@ -12,10 +12,13 @@ import (
 	"log"
 )
 
+const failsThreshold = 2
+
 // NewKafkaWriterLoop builds new loop function and communication channel from the given kafkaWriter
 func NewKafkaWriterLoop(kafkaWriter *kafka.Writer, stopCh chan struct{}) (func() error, chan message.ProbeResultMessage) {
 	resCh := make(chan message.ProbeResultMessage)
 	loop := func() error {
+		fails := 0
 		for {
 			select {
 			case <-stopCh:
@@ -25,6 +28,10 @@ func NewKafkaWriterLoop(kafkaWriter *kafka.Writer, stopCh chan struct{}) (func()
 				if err != nil {
 					if errors.Is(err, io.EOF) { // connection closed
 						return fmt.Errorf("kafka connection error: %w", err)
+					}
+					fails++
+					if fails > failsThreshold {
+						return fmt.Errorf("writer loop fails for %d times", fails)
 					}
 					log.Print("error sending kafka message, re-send to the dead letter queue", err)
 				}

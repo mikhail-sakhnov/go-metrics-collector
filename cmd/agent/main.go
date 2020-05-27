@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/soider/go-metrics-collector/internal/agent"
 	"github.com/soider/go-metrics-collector/internal/agent/probes"
 	"github.com/soider/go-metrics-collector/internal/agent/writer"
@@ -48,7 +49,7 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 		targetsFilePath,
 		agent.MustParseSelector(rawSelector),
 	)
-	var gr errgroup.Group
+	gr, ctx := errgroup.WithContext(context.Background())
 	stopCh := make(chan struct{})
 	loopFn, resCh := writer.NewKafkaWriterLoop(writer.MustBuildKafkaWriteClient(
 		brokers,
@@ -63,14 +64,18 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 	signal.Notify(signalCh, syscall.SIGINT)
 
 	go func() {
-		<-signalCh
-		log.Print("Caught interruption signal, stopping agent")
+		select {
+		case <-signalCh:
+			log.Print("Caught interruption signal, stopping agent")
+		case <-ctx.Done():
+			log.Print("Background context cancelled")
+		}
 		close(stopCh)
 	}()
 
-
 	gr.Go(func() error {
-		return loopFn()
+		err := loopFn()
+		return err
 	})
 
 	gr.Go(func() error {

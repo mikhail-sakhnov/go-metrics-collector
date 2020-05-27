@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// MonitoringAgent handles set of monitoring targets, in terms of application MonitoringAgent maps 1 to 1 with one running agent
+// MonitoringAgent handles set of monitoring targets, in terms of application MonitoringAgent maps 1 to 1 with one running Agent
 type MonitoringAgent struct {
 	targets          Targets
 	failureThreshold int
@@ -33,7 +33,7 @@ type prober interface {
 func NewMonitoringAgent(t Targets, resCh chan message.ProbeResultMessage, prober prober) *MonitoringAgent {
 	return &MonitoringAgent{
 		targets:          t,
-		resultsCh:      resCh,
+		resultsCh:        resCh,
 		failureThreshold: 5, // TODO: make configurable
 		writeTimeout:     time.Second * 1,
 		readTimeout:      time.Second * 10,
@@ -43,7 +43,7 @@ func NewMonitoringAgent(t Targets, resCh chan message.ProbeResultMessage, prober
 
 // Run runs main loop for the coordinator
 func (ma MonitoringAgent) Run(stopCh chan struct{}) error {
-	log.Print("Start agent", ma.targets)
+	log.Print("Start Agent", ma.targets)
 	var errGr errgroup.Group
 	for _, t := range ma.targets {
 		// TODO: limit amount of the goroutines
@@ -65,8 +65,9 @@ func (ma MonitoringAgent) Run(stopCh chan struct{}) error {
 						log.Printf("Agent `%s` probes failed %v for `%d` times", t.Name, err, fails)
 						fails++
 						if fails > ma.failureThreshold {
-							return fmt.Errorf("agent `%s` has failed too many times", t.Name)
+							return ErrTooManyFailures{t.Name}
 						}
+						continue
 					}
 					ma.sendResult(msg)
 				case <-stopCh:
@@ -76,10 +77,7 @@ func (ma MonitoringAgent) Run(stopCh chan struct{}) error {
 			}
 		})
 	}
-	err := errGr.Wait()
-	fmt.Println(err)
-	log.Print("Stop agent")
-	return nil
+	return errGr.Wait()
 }
 
 func (ma MonitoringAgent) sendResult(msg message.ProbeResultMessage) error {

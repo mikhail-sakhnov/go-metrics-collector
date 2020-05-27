@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Targets represent agent per-target settings
+// Targets represent Agent per-target settings
 type Targets []Target
 
 // Target represents target
