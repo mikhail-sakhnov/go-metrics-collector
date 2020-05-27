@@ -31,11 +31,11 @@ type prober interface {
 }
 
 // NewMonitoringAgent constructor
-func NewMonitoringAgent(t Targets, resCh chan message.ProbeResultMessage, prober prober) *MonitoringAgent {
+func NewMonitoringAgent(t Targets, resCh chan message.ProbeResultMessage, prober prober, failureThreshold int) *MonitoringAgent {
 	return &MonitoringAgent{
 		targets:          t,
 		resultsCh:        resCh,
-		failureThreshold: 5, // TODO: make configurable
+		failureThreshold: failureThreshold,
 		writeTimeout:     time.Second * 10,
 		readTimeout:      time.Second * 10,
 		prober:           prober,

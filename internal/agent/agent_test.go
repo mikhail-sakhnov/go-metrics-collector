@@ -64,7 +64,7 @@ func TestMonitoringAgent(t *testing.T) {
 				"http://uri2/": 400,
 			},
 		}
-		agent := NewMonitoringAgent(targets, resCh, prober)
+		agent := NewMonitoringAgent(targets, resCh, prober, 5)
 		go func() {
 			time.Sleep(time.Second)
 			cancel()
@@ -106,8 +106,7 @@ func TestMonitoringAgent(t *testing.T) {
 			return message.ProbeResultMessage{}, fmt.Errorf("error from the mocked prober for uri `%s`, Agent `%s`", uri, from)
 		})
 
-		agent := NewMonitoringAgent(targets, resCh, prober)
-		agent.failureThreshold = 3
+		agent := NewMonitoringAgent(targets, resCh, prober, 3)
 
 		go func() {
 			time.Sleep(time.Millisecond * 10)

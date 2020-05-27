@@ -22,6 +22,7 @@ func main() {
 			&cli.StringFlag{Name: "certFile", Required: true},
 			&cli.StringFlag{Name: "keyFile", Required: true},
 			&cli.StringFlag{Name: "caFile", Required: true},
+			&cli.IntFlag{Name: "failureThreshold", DefaultText: "5"},
 		},
 		Name:  "metrics-collector-agent",
 		Usage: "starts agent",
@@ -33,6 +34,7 @@ func main() {
 				c.String("certFile"),
 				c.String("keyFile"),
 				c.String("caFile"),
+				c.Int("failureThreshold"),
 			)
 		},
 	}
@@ -43,7 +45,7 @@ func main() {
 }
 
 // Main application entry point
-func run(targetsFilePath string, rawSelector []string, brokers []string, topic, certFile, keyFile, caFile string) error {
+func run(targetsFilePath string, rawSelector []string, brokers []string, topic, certFile, keyFile, caFile string, failureThreshold int) error {
 	targets := agent.MustReadTargets(
 		targetsFilePath,
 		agent.MustParseSelector(rawSelector),
@@ -58,10 +60,10 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 		keyFile,
 		caFile,
 	),
-		5, // TODO: move to configuration
+		failureThreshold,
 	)
 
-	runningAgent := agent.NewMonitoringAgent(targets, resCh, probes.HTTPProbe)
+	runningAgent := agent.NewMonitoringAgent(targets, resCh, probes.HTTPProbe, failureThreshold)
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT)
 
@@ -82,5 +84,6 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 	gr.Go(func() error {
 		return runningAgent.Run(ctx)
 	})
+
 	return gr.Wait()
 }

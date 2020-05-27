@@ -2,6 +2,7 @@ package agent
 
 import (
 	"github.com/segmentio/kafka-go"
+	"github.com/soider/go-metrics-collector/internal/pkg/env"
 	"github.com/soider/go-metrics-collector/internal/pkg/tls"
 	"time"
 )
@@ -31,9 +32,9 @@ func buildKafkaWriteClient(brokers []string, topic, certFile, keyFile, caFile st
 		Brokers:       brokers,
 		Topic:         topic,
 		Dialer:        dialer,
-		QueueCapacity: getEnvInt("KAFKA_WRITE_QUEUE_CAPACITY", 10),
-		BatchSize:     getEnvInt("KAFKA_WRITE_BATCH_SIZE", 1),
-		BatchTimeout:  time.Second * time.Duration(getEnvInt("KAFKA_WRITE_BATCH_TIMEOUT_SECONDS", 1)),
+		QueueCapacity: env.GetEnvInt("KAFKA_WRITE_QUEUE_CAPACITY", 10),
+		BatchSize:     env.GetEnvInt("KAFKA_WRITE_BATCH_SIZE", 1),
+		BatchTimeout:  time.Second * time.Duration(env.GetEnvInt("KAFKA_WRITE_BATCH_TIMEOUT_SECONDS", 1)),
 		Async:         false,
 	})
 

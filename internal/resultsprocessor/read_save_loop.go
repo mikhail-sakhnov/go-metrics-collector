@@ -3,6 +3,7 @@ package resultsprocessor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-pg/pg/v9"
 	"github.com/segmentio/kafka-go"
@@ -15,9 +16,14 @@ func Loop(ctx context.Context, db *pg.DB, reader *kafka.Reader) error {
 	var msg message.ProbeResultMessage
 	for {
 		raw, err := reader.ReadMessage(ctx)
-		if err != nil {
-			return fmt.Errorf("can't read from kafka: %w", err)
+		switch errors.Unwrap(err) {
+		case nil:
+		case context.Canceled:
+			return nil
+		default:
+			return fmt.Errorf("can't read data from kafka: %w", err)
 		}
+
 		if err := json.Unmarshal(raw.Value, &msg); err != nil {
 			handleBadMessage(raw.Value)
 		}

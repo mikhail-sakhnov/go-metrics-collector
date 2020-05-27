@@ -7,6 +7,7 @@ import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
 	"github.com/segmentio/kafka-go"
+	"github.com/soider/go-metrics-collector/internal/pkg/env"
 	"github.com/soider/go-metrics-collector/internal/pkg/message"
 	"io"
 	"log"
@@ -14,7 +15,7 @@ import (
 
 // NewKafkaWriterLoop builds new loop function and communication channel from the given kafkaWriter
 func NewKafkaWriterLoop(kafkaWriter *kafka.Writer, failsThreshold int) (func(ctx context.Context) error, chan message.ProbeResultMessage) {
-	resCh := make(chan message.ProbeResultMessage, 100) // TODO: magic constant has value as default queue size in the segmentio lib, move to args
+	resCh := make(chan message.ProbeResultMessage, env.GetEnvInt("KAFKA_IN_MEMORY_QUEUE_SIZE", 100))
 	loop := func(ctx context.Context) error {
 		fails := 0
 		for {
