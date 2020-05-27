@@ -1,0 +1,14 @@
+- name: reddit_5_seconds
+  uri: https://reddit.com
+  interval: 5s
+  regexp: ".*redux_json_start.*"
+  selector:
+    target: reddit
+    enable: true
+
+- name: lor_6_seconds
+  uri: https://linux.org.ru
+  interval: 6s
+  selector:
+    target: lor
+    enable: false
