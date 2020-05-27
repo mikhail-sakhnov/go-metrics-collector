@@ -59,7 +59,7 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 		caFile,
 	),
 		5, // TODO: move to configuration
-		)
+	)
 
 	runningAgent := agent.NewMonitoringAgent(targets, resCh, probes.HTTPProbe)
 	signalCh := make(chan os.Signal, 1)

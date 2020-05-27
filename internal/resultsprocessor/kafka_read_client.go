@@ -24,8 +24,8 @@ func buildKafkaReadClient(brokers []string, topic, certFile, keyFile, caFile str
 		Dialer: &kafka.Dialer{
 			TLS: tlsConfig,
 		},
-		Topic:   topic,
-		GroupID: "results-processor-cg",
+		Topic:    topic,
+		GroupID:  "results-processor-cg",
 		MinBytes: 100,
 		MaxBytes: 500,
 	})

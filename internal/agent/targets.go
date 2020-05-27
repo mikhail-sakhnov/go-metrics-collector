@@ -45,9 +45,7 @@ func MustParseSelector(selector []string) Selector {
 }
 
 func parseSelector(selector []string) (Selector, error) {
-	parsed := Selector{
-
-	}
+	parsed := Selector{}
 	for _, s := range selector {
 		parts := strings.Split(s, "=")
 		if len(parts) != 2 {
