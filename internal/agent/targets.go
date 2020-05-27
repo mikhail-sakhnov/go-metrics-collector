@@ -18,6 +18,7 @@ type Target struct {
 	Interval time.Duration `yaml:"interval"`
 	RegExp   string        `yaml:"regexp"`
 	Selector Selector      `yaml:"selector"`
+	Timeout  time.Duration `yaml:"timeout"`
 }
 
 // Selector represents selector description

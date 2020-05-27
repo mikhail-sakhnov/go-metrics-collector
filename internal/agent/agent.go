@@ -18,12 +18,6 @@ type MonitoringAgent struct {
 
 	prober    prober
 	resultsCh chan message.ProbeResultMessage
-
-	writeTimeout time.Duration
-	readTimeout  time.Duration
-}
-
-type resultsSaver interface {
 }
 
 type prober interface {
@@ -36,8 +30,6 @@ func NewMonitoringAgent(t Targets, resCh chan message.ProbeResultMessage, prober
 		targets:          t,
 		resultsCh:        resCh,
 		failureThreshold: failureThreshold,
-		writeTimeout:     time.Second * 10,
-		readTimeout:      time.Second * 10,
 		prober:           prober,
 	}
 }
@@ -47,7 +39,6 @@ func (ma MonitoringAgent) Run(ctx context.Context) error {
 	log.Print("Start Agent", ma.targets)
 	var errGr errgroup.Group
 	for _, t := range ma.targets {
-		// TODO: limit amount of the goroutines
 		t := t // capture local var
 		log.Print("Scheduling routine", t.Name)
 		var pattern *regexp.Regexp
@@ -61,6 +52,9 @@ func (ma MonitoringAgent) Run(ctx context.Context) error {
 				select {
 				case <-ticker.C:
 					log.Println("Doing job", t.Name, t.URI, t.RegExp)
+					if t.Timeout > 0 {
+						ctx, _ = context.WithTimeout(ctx, t.Timeout)
+					}
 					msg, err := ma.prober.Probe(ctx, t.Name, t.URI, pattern)
 					switch errors.Unwrap(err) {
 					case nil:
@@ -91,7 +85,7 @@ func (ma MonitoringAgent) sendResult(msg message.ProbeResultMessage) error {
 	select {
 	case ma.resultsCh <- msg:
 	default:
-		return fmt.Errorf("can't save probes result, tried for %s, in memory buffer full", ma.writeTimeout)
+		return fmt.Errorf("can't save probes result, in memory buffer full")
 	}
 	return nil
 }
