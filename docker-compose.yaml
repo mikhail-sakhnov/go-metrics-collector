@@ -4,7 +4,7 @@ services:
   agent:
     image: golang:1.14
     volumes:
-    - .:/app
+      - .:/app
     working_dir: /app
     command:
       - go
@@ -48,7 +48,7 @@ services:
   init_db:
     image: golang:1.14
     volumes:
-    - .:/app
+      - .:/app
     working_dir: /app/migrations
     command:
       - ./migrate.sh
@@ -64,6 +64,18 @@ services:
       - ./migrate.sh
       - reset
       - "${POSTGRES_URI}"
+
+  unit_tests:
+    image: golang:1.14
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    command:
+      - go
+      - test
+      - ./internal/...
 
   e2e_tests:
     image: golang:1.14
