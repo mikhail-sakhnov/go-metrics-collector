@@ -2,7 +2,7 @@ package probes
 
 import (
 	"context"
-	"github.com/soider/go-metrics-collector/internal/message"
+	"github.com/soider/go-metrics-collector/internal/pkg/message"
 	"regexp"
 )
 

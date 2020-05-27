@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/soider/go-metrics-collector/internal/agent"
 	"github.com/soider/go-metrics-collector/internal/agent/probes"
-	"github.com/soider/go-metrics-collector/internal/agent/writer"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"
 	"log"
@@ -49,15 +48,18 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 		targetsFilePath,
 		agent.MustParseSelector(rawSelector),
 	)
-	gr, ctx := errgroup.WithContext(context.Background())
-	stopCh := make(chan struct{})
-	loopFn, resCh := writer.NewKafkaWriterLoop(writer.MustBuildKafkaWriteClient(
+	ctx, cancel := context.WithCancel(context.Background())
+	gr, ctx := errgroup.WithContext(ctx)
+
+	loopFn, resCh := agent.NewKafkaWriterLoop(agent.MustBuildKafkaWriteClient(
 		brokers,
 		topic,
 		certFile,
 		keyFile,
 		caFile,
-	), stopCh)
+	),
+		5, // TODO: move to configuration
+		)
 
 	runningAgent := agent.NewMonitoringAgent(targets, resCh, probes.HTTPProbe)
 	signalCh := make(chan os.Signal, 1)
@@ -70,16 +72,15 @@ func run(targetsFilePath string, rawSelector []string, brokers []string, topic, 
 		case <-ctx.Done():
 			log.Print("Background context cancelled")
 		}
-		close(stopCh)
+		cancel()
 	}()
 
 	gr.Go(func() error {
-		err := loopFn()
-		return err
+		return loopFn(ctx)
 	})
 
 	gr.Go(func() error {
-		return runningAgent.Run(stopCh)
+		return runningAgent.Run(ctx)
 	})
 	return gr.Wait()
 }

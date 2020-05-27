@@ -1,9 +1,8 @@
-package writer
+package agent
 
 import (
 	"github.com/segmentio/kafka-go"
 	"github.com/soider/go-metrics-collector/internal/pkg/tls"
-	"log"
 	"time"
 )
 
@@ -12,12 +11,6 @@ func MustBuildKafkaWriteClient(brokers []string, topic, certFile, keyFile, caFil
 	cli, err := buildKafkaWriteClient(brokers, topic, certFile, keyFile, caFile)
 	mustNotErr(err)
 	return cli
-}
-
-func mustNotErr(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
 }
 
 func buildKafkaWriteClient(brokers []string, topic, certFile, keyFile, caFile string) (*kafka.Writer, error) {
@@ -35,9 +28,13 @@ func buildKafkaWriteClient(brokers []string, topic, certFile, keyFile, caFile st
 	}
 
 	w := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: brokers,
-		Topic:   topic,
-		Dialer:  dialer,
+		Brokers:       brokers,
+		Topic:         topic,
+		Dialer:        dialer,
+		QueueCapacity: getEnvInt("KAFKA_WRITE_QUEUE_CAPACITY", 10),
+		BatchSize:     getEnvInt("KAFKA_WRITE_BATCH_SIZE", 1),
+		BatchTimeout:  time.Second * time.Duration(getEnvInt("KAFKA_WRITE_BATCH_TIMEOUT_SECONDS", 1)),
+		Async:         false,
 	})
 
 	return w, nil

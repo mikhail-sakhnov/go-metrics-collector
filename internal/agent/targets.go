@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"strings"
 	"time"
 )
@@ -57,12 +56,6 @@ func parseSelector(selector []string) (Selector, error) {
 		parsed[parts[0]] = parts[1]
 	}
 	return parsed, nil
-}
-
-func mustNotErr(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
 }
 
 // MustReadTargets reads target file, panics on failure

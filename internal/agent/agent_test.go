@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/soider/go-metrics-collector/internal/agent/probes"
-	"github.com/soider/go-metrics-collector/internal/message"
+	"github.com/soider/go-metrics-collector/internal/pkg/message"
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
@@ -48,7 +48,7 @@ func TestMonitoringAgent(t *testing.T) {
 			},
 		}
 		resCh := make(chan message.ProbeResultMessage, 100)
-		stopCh := make(chan struct{})
+		ctx, cancel := context.WithCancel(context.Background())
 		prober := dummyProber{
 			callLog: map[string][]time.Time{},
 			latency: map[string]time.Duration{
@@ -67,10 +67,10 @@ func TestMonitoringAgent(t *testing.T) {
 		agent := NewMonitoringAgent(targets, resCh, prober)
 		go func() {
 			time.Sleep(time.Second)
-			close(stopCh)
+			cancel()
 		}()
 
-		err := agent.Run(stopCh)
+		err := agent.Run(ctx)
 		close(resCh)
 
 		assert.NoError(t, err, "Must have no error")
@@ -98,23 +98,27 @@ func TestMonitoringAgent(t *testing.T) {
 				Selector: nil,
 			},
 		}
-		resCh := make(chan message.ProbeResultMessage, 100)
-		stopCh := make(chan struct{})
+		resCh := make(chan message.ProbeResultMessage, 1)
+		resCh <- message.ProbeResultMessage{} // one fake result to forever break saveResults routine
+		ctx, cancel := context.WithCancel(context.Background())
+
 		prober := probes.Function(func(ctx context.Context, from, uri string, searchFor *regexp.Regexp) (message.ProbeResultMessage, error) {
 			return message.ProbeResultMessage{}, fmt.Errorf("error from the mocked prober for uri `%s`, Agent `%s`", uri, from)
 		})
+
 		agent := NewMonitoringAgent(targets, resCh, prober)
 		agent.failureThreshold = 3
+
 		go func() {
 			time.Sleep(time.Millisecond * 10)
-			close(stopCh)
+			cancel()
 		}()
 
-		err := agent.Run(stopCh)
+		err := agent.Run(ctx)
 		close(resCh)
 
 		assert.Error(t, err, "Must have error")
 		assert.Equal(t, err.(ErrTooManyFailures).Agent, "test_target_1")
-		assert.True(t, len(resCh) == 0, "Must have no probe results")
+		assert.Equal(t, 1, len(resCh), "Must have no probe results")
 	})
 }

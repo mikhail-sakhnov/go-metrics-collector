@@ -10,12 +10,12 @@ func init() {
 	migrations.MustRegisterTx(func(db migrations.DB) error {
 		fmt.Println("creating table probe_results...")
 		_, err := db.Exec(`CREATE TABLE probe_results(
-		AgentName VARCHAR(100) NOT NULL,
-		ResponseTime bigint NOT NULL,
-		HTTPCode smallint NOT NULL,
-		ContentFound bool DEFAULT false,
-		TimeStamp timestamp NOT NULL DEFAULT NOW(),
-		PRIMARY KEY(Agentname, TimeStamp)
+		agent_name VARCHAR(100) NOT NULL,
+		response_time bigint NOT NULL,
+		http_code smallint NOT NULL,
+		content_found bool DEFAULT false,
+		timestamp timestamp NOT NULL DEFAULT NOW(),
+		PRIMARY KEY(agent_name, timestamp)
 	)`)
 		return err
 	}, func(db migrations.DB) error {

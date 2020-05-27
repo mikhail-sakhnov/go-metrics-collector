@@ -2,8 +2,9 @@ package probes
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/soider/go-metrics-collector/internal/message"
+	"github.com/soider/go-metrics-collector/internal/pkg/message"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -30,9 +31,12 @@ var HTTPProbe = Function(
 			}()
 			resp, httpErr = http.DefaultClient.Do(req)
 		}()
-
-		if httpErr != nil {
-			return message.ProbeResultMessage{}, fmt.Errorf("http probes request execution failure for uri `%s`: %w", uri, err)
+		switch errors.Unwrap(httpErr) {
+		case nil:
+		case context.Canceled:
+			return message.ProbeResultMessage{}, httpErr
+		default:
+			return message.ProbeResultMessage{}, fmt.Errorf("http probes request execution failure for uri `%s`: %w", uri, httpErr)
 		}
 		if resp.Body != nil {
 			defer resp.Body.Close()
